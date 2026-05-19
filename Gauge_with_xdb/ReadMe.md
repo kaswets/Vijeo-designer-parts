@@ -1,6 +1,6 @@
 # Gauge Scale - Vijeo Designer / Control Expert
 
-Eigen analoge drukmeter met kleurzones voor vacuüm en perslucht, gebouwd voor Vijeo Designer HMI in combinatie met Schneider Control Expert PLC.
+Eigen kleurzones voor vacuüm en perslucht, voor achter een meter , gebouwd voor Vijeo Designer HMI in combinatie met Schneider Control Expert PLC.
 
 ---
 
