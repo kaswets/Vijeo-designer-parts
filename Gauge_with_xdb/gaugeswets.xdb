@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<FBExchangeFile>
+	<fileHeader company="Schneider Automation" product="Control Expert V14.1 - 191122A" dateTime="date_and_time#2026-5-19-8:49:39" content="Function Block source file" DTDVersion="41"></fileHeader>
+	<contentHeader name="Project" version="0.0.1734" dateTime="date_and_time#2026-5-12-9:46:28"></contentHeader>
+	<FBSource nameOfFBType="GaugeSwets" version="1.28" dateTime="dt#2021-07-21-15:57:13">
+		<comment>Analog pointer meter with setpoints scale.</comment>
+		<attribute name="TypeCodeCheckSumString" value="A994"></attribute>
+		<attribute name="TypeSignatureCheckSumString" value="ADCA"></attribute>
+		<attribute name="TypeDataDicSubfieldsCount" value="20"></attribute>
+		<inputParameters>
+			<variables name="Pressure" typeName="INT">
+				<attribute name="PositionPin" value="1"></attribute>
+			</variables>
+			<variables name="spHigh" typeName="INT">
+				<attribute name="PositionPin" value="2"></attribute>
+			</variables>
+			<variables name="spMid" typeName="INT">
+				<attribute name="PositionPin" value="3"></attribute>
+			</variables>
+			<variables name="spLow" typeName="INT">
+				<attribute name="PositionPin" value="4"></attribute>
+			</variables>
+			<variables name="maxPress" typeName="INT">
+				<attribute name="PositionPin" value="5"></attribute>
+			</variables>
+			<variables name="VacRelease" typeName="INT">
+				<attribute name="PositionPin" value="6"></attribute>
+			</variables>
+			<variables name="MaxVac" typeName="INT">
+				<attribute name="PositionPin" value="7"></attribute>
+			</variables>
+			<variables name="FullScale" typeName="STRING">
+				<comment>1=-1to6, 2=-1to5</comment>
+				<attribute name="PositionPin" value="8"></attribute>
+			</variables>
+		</inputParameters>
+		<outputParameters>
+			<variables name="HmiData" typeName="Gauge">
+				<attribute name="PositionPin" value="1"></attribute>
+			</variables>
+		</outputParameters>
+		<privateLocalVariables>
+			<variables name="TmpPress" typeName="REAL"></variables>
+			<variables name="MaxPressMeter" typeName="REAL"></variables>
+			<variables name="tmpVacRelease" typeName="REAL"></variables>
+			<variables name="MaxVacMeter" typeName="REAL"></variables>
+			<variables name="tmpVacPumps" typeName="REAL"></variables>
+			<variables name="VacDegressScale" typeName="REAL"></variables>
+		</privateLocalVariables>
+		<FBProgram name="info">
+			<STSource>(*
+
+Omdat ik het scherm meters wilde met meer kleurtjes in de schaal, heb ik een soort van eigen meter gemaakt
+
+het is een gewone standaard vijeo meter,
+maar daaronder liggen een aantal CirclGraph objecten voor de kleurtjes
+
+en in dit functie block zit het verhaaltje om het allemaal kloppend temaken in het scherm
+
+
+Inputs:
+
+pressure 	= de druk die de wijzer aan moet wijzen, In milibars					(int)
+MaxPress 	= de druk die de compressor max kunnen leveren (na die druk word de schaal rood)	(int)
+spHig    	= Setpoint High  (groen/orange)								(int)
+spMid		= Setpoint Mid	(groenblauw/licht groen)						(int)
+Splow		= setpoint Low 	(donker blauw/groenblauw)						(int)
+
+VacRelease	= Max Vacuum (lichtblauw/Orange) relase valve gaat open
+MaxVac		= MaxVacuum (oranje/rood) vacuumpompen vallen uit
+
+FullScale	= "3000" -&gt; -1 to 3 bar
+		= "4000" -&gt; -1 to 4 bar
+		= "5000" -&gt; -1 to 5 bar
+		= "6000" -&gt; -1 to 6 bar
+		= "8000" -&gt; -1 to 8 bar
+
+
+
+Meter is gebruikt in
+(alles hangt aan een PlaceHolder!)
+Dus de meter is uit deze projecten te kopieren.
+
+opmerkingen:
+
+
+190019 Test Opstelling Bergharen
+190117 Fujian DN455 01&amp;02
+210155 BASHUNDHARA 2115
+*)
+</STSource>
+		</FBProgram>
+		<FBProgram name="GaugePrg">
+			<STSource>
+
+HmiData.ActualPressure:=Pressure;
+
+
+
+if FullScale='6000' then
+	MaxPressMeter:=6000.0;
+	HmiData.TypeGauge:=6000;
+	HmiData.MaxPressScale:=5000;
+	VacDegressScale:=1.05;
+elsif	FullScale='5000' then
+	MaxPressMeter:=5000.0;
+	HmiData.TypeGauge:=5000;
+	HmiData.MaxPressScale:=5000;
+	VacDegressScale:=1.25;
+elsif	FullScale='4000' then
+	MaxPressMeter:=4000.0;
+	HmiData.TypeGauge:=4000;
+	HmiData.MaxPressScale:=5000;
+	VacDegressScale:=1.55;
+elsif	FullScale='3000' then
+	MaxPressMeter:=3000.0;
+	HmiData.TypeGauge:=3000;
+	HmiData.MaxPressScale:=5000;
+	VacDegressScale:=2.1;
+elsif	FullScale='8000' then
+	MaxPressMeter:=8000.0;
+	HmiData.TypeGauge:=8000;
+	HmiData.MaxPressScale:=5720;
+	VacDegressScale:=0.75;
+end_if;
+
+MaxVacMeter:=-1000.0;
+
+TmpPress:=int_to_real(HmiData.MaxPressScale)/MaxPressMeter;
+
+
+HmiData.MaxPress:=real_to_int(TmpPress*maxPressMeter);
+
+HmiData.MaxPress:= real_to_int(TmpPress*int_to_real(maxPress));
+HmiData.spHigh:= real_to_int(TmpPress*int_to_real(spHigh));
+HmiData.spMid:= real_to_int(TmpPress*int_to_real(spMid));
+HmiData.spLow:= real_to_int(TmpPress*int_to_real(spLow));
+
+
+
+HmiData.MaxVacScale:=real_to_int(((maxPressMeter/2.0)+MaxVacMeter )*VacDegressScale);
+
+
+tmpVacRelease:=int_to_real(VacRelease);
+HmiData.MaxVacRelease:=real_to_int(((maxPressMeter/2.0)+tmpVacRelease )*VacDegressScale);
+
+tmpVacPumps:=int_to_real(MaxVac);
+HmiData.MaxVacPump:=real_to_int(((maxPressMeter/2.0)+tmpVacPumps )*VacDegressScale);
+
+
+</STSource>
+		</FBProgram>
+	</FBSource>
+	<DDTSource DDTName="Gauge" version="0.03" dateTime="dt#2021-03-18-11:52:26">
+		<attribute name="TypeSignatureCheckSumString" value="4790"></attribute>
+		<attribute name="TypeDataDicSubfieldsCount" value="11"></attribute>
+		<structure>
+			<variables name="spLow" typeName="INT"></variables>
+			<variables name="spMid" typeName="INT"></variables>
+			<variables name="spHigh" typeName="INT"></variables>
+			<variables name="MaxPress" typeName="INT"></variables>
+			<variables name="MaxPressScale" typeName="INT"></variables>
+			<variables name="MaxVacRelease" typeName="INT"></variables>
+			<variables name="MaxVacPump" typeName="INT"></variables>
+			<variables name="MaxVacScale" typeName="INT"></variables>
+			<variables name="TypeGauge" typeName="INT"></variables>
+			<variables name="ActualPressure" typeName="INT"></variables>
+		</structure>
+	</DDTSource>
+</FBExchangeFile>
